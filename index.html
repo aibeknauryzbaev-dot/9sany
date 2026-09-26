@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>9 Санының Құрамы - Көңілді Математика</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .font-kid {
+      font-family: 'Comfortaa', cursive;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(2deg); }
+    }
+    .animate-float {
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes bounce-pop {
+      0% { transform: scale(0.6); opacity: 0; }
+      70% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+    .animate-pop {
+      animation: bounce-pop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .card-flip {
+      perspective: 1000px;
+    }
+    .card-inner {
+      transition: transform 0.4s;
+      transform-style: preserve-3d;
+    }
+    .card-inner.flipped {
+      transform: rotateY(180deg);
+    }
+    .card-front, .card-back {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .card-back {
+      transform: rotateY(180deg);
+    }
+    /* Confetti canvas */
+    #confettiCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-b from-sky-300 via-indigo-100 to-amber-50 min-h-screen text-slate-800 flex flex-col justify-between">
+  <canvas id="confettiCanvas"></canvas>
+
+  <header class="w-full max-w-4xl mx-auto px-4 pt-4 pb-2">
+    <div class="flex items-center justify-between bg-white/90 backdrop-blur-md rounded-3xl p-3 shadow-lg border-4 border-amber-300">
+      <div class="flex items-center gap-2">
+        <div class="w-12 h-12 bg-amber-400 rounded-2xl flex items-center justify-center text-3xl shadow-inner animate-bounce">
+          🎯
+        </div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-black text-amber-700 tracking-wide font-kid leading-none">
+            9 САНЫНЫҢ ҚҰРАМЫ
+          </h1>
+          <span class="text-xs text-sky-600 font-bold">Қосу және Азайту әлемі</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Ұпайлар -->
+        <div class="flex items-center gap-1 bg-amber-100 px-3 py-1.5 rounded-2xl border-2 border-amber-300">
+          <span class="text-xl">⭐</span>
+          <span id="scoreDisplay" class="text-lg font-black text-amber-900">0</span>
+        </div>
+
+        <!-- Дыбыс түймесі -->
+        <button id="soundToggleBtn" class="w-10 h-10 rounded-2xl bg-indigo-100 hover:bg-indigo-200 border-2 border-indigo-300 flex items-center justify-center text-lg transition active:scale-90">
+          🔊
+        </button>
+      </div>
+    </div>
+
+    <!-- Режим таңдау навигациясы -->
+    <nav class="flex flex-wrap gap-2 justify-center mt-3" id="tabNav">
+      <button onclick="switchTab('house')" data-tab="house" class="tab-btn active px-4 py-2 rounded-2xl font-black text-sm transition-all shadow-md bg-amber-500 text-white border-2 border-amber-600 scale-105">
+        🏠 Сан үйшігі
+      </button>
+      <button onclick="switchTab('apples')" data-tab="apples" class="tab-btn px-4 py-2 rounded-2xl font-black text-sm transition-all shadow-md bg-white text-slate-700 border-2 border-slate-200 hover:bg-amber-100">
+        🍎 9 Алма жинау
+      </button>
+      <button onclick="switchTab('quiz')" data-tab="quiz" class="tab-btn px-4 py-2 rounded-2xl font-black text-sm transition-all shadow-md bg-white text-slate-700 border-2 border-slate-200 hover:bg-amber-100">
+        ⚡ Блиц: Қосу-Азайту
+      </button>
+      <button onclick="switchTab('match')" data-tab="match" class="tab-btn px-4 py-2 rounded-2xl font-black text-sm transition-all shadow-md bg-white text-slate-700 border-2 border-slate-200 hover:bg-amber-100">
+        🃏 Жұбын тап
+      </button>
+    </nav>
+  </header>
+
+  <section class="max-w-xl mx-auto w-full px-4 mt-1">
+    <div class="bg-white/80 backdrop-blur rounded-2xl p-2.5 border-2 border-sky-300 shadow-sm flex items-center justify-between gap-2">
+      <div class="flex items-center gap-1.5 text-xs font-bold text-sky-800">
+        <span>💡 Көрнекі көмекші:</span>
+        <span class="text-sky-600">(Барлығы 9 алма)</span>
+      </div>
+      <div class="grid grid-flow-col auto-cols-max gap-1" id="visualTenFrame">
+        <!-- 9 dots will be rendered here dynamically -->
+      </div>
+    </div>
+  </section>
+
+  <!-- НЕГІЗГІ ОЙЫН АЛАҢЫ -->
+  <main class="w-full max-w-4xl mx-auto px-4 py-3 flex-1 flex flex-col justify-center">
+
+    <!-- 1-РЕЖИМ: САН ҮЙШІГІ (NUMBER HOUSE) -->
+    <div id="gameHouse" class="game-view w-full max-w-lg mx-auto bg-white rounded-3xl p-5 shadow-2xl border-4 border-amber-400 relative overflow-hidden">
+      <div class="text-center mb-3">
+        <h2 class="text-2xl font-black text-amber-700 font-kid">🏠 9 Санының Үйшігі</h2>
+        <p class="text-xs text-slate-500 font-bold">Қатардағы екі санның қосындысы <span class="text-rose-500 font-black">9</span> болуы керек!</p>
+      </div>
+
+      <!-- Үйдің төбесі (Шатыр) -->
+      <div class="relative w-44 h-24 mx-auto mb-2 flex items-end justify-center">
+        <div class="absolute inset-0 border-l-[88px] border-r-[88px] border-b-[96px] border-l-transparent border-r-transparent border-b-rose-500 w-0 h-0"></div>
+        <div class="relative z-10 mb-2 w-14 h-14 bg-white rounded-full flex items-center justify-center border-4 border-rose-600 shadow-lg">
+          <span class="text-3xl font-black text-rose-600 font-kid">9</span>
+        </div>
+      </div>
+
+      <!-- Үйдің қабаттары -->
+      <div class="space-y-2 bg-amber-50 p-3 rounded-2xl border-2 border-amber-200">
+        <div id="houseRowsContainer" class="space-y-2.5">
+          <!-- Қабаттар динамикалық салынады -->
+        </div>
+      </div>
+
+      <!-- Сандарды таңдау тақтасы -->
+      <div class="mt-4 pt-3 border-t-2 border-slate-100 text-center">
+        <div class="text-xs font-bold text-slate-600 mb-2">Бос орынға қойылатын санды басыңыз:</div>
+        <div class="flex flex-wrap justify-center gap-2" id="houseKeypad">
+          <!-- Сандық батырмалар 0-ден 9-ға дейін -->
+        </div>
+      </div>
+
+      <div class="mt-3 flex justify-between items-center text-xs text-slate-500 font-bold px-2">
+        <span>Кезең: <span id="houseProgress" class="text-indigo-600">1 / 5</span></span>
+        <button onclick="initHouseMode()" class="text-amber-700 hover:underline">Жаңа үйшік 🔄</button>
+      </div>
+    </div>
+
+    <!-- 2-РЕЖИМ: АЛМА ЖИНАУ (APPLE BASKET - MAKE 9) -->
+    <div id="gameApples" class="game-view hidden w-full max-w-xl mx-auto bg-gradient-to-b from-emerald-100 to-green-50 rounded-3xl p-5 shadow-2xl border-4 border-emerald-400">
+      <div class="text-center mb-3">
+        <h2 class="text-2xl font-black text-emerald-800 font-kid">🍎 Қосындысы 9 Алмаларды Жина!</h2>
+        <p class="text-xs sm:text-sm text-emerald-700 font-bold">Қосындысы тура 9 шығатын 2 алманы басып тап!</p>
+      </div>
+
+      <!-- Себет пен нәтиже индикаторы -->
+      <div class="bg-white/80 rounded-2xl p-2.5 mb-3 flex items-center justify-around border-2 border-emerald-300">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🧺</span>
+          <span class="text-xs font-bold text-slate-600">Таңдалған:</span>
+          <span id="appleSelectionDisplay" class="font-black text-emerald-700 text-lg bg-emerald-100 px-3 py-0.5 rounded-xl min-w-[5rem] text-center">? + ?</span>
+        </div>
+        <div class="text-xs font-black px-2 py-1 rounded-xl bg-amber-200 text-amber-900" id="appleStatusHint">
+          2 алма таңда
+        </div>
+      </div>
+
+      <!-- Алмалар торы -->
+      <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 p-2 min-h-[220px]" id="applesGrid">
+        <!-- Алмалар генерацияланады -->
+      </div>
+
+      <div class="mt-4 flex justify-between items-center px-2">
+        <button onclick="initApplesMode()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black shadow-md transition active:scale-95">
+          Алмаларды араластыру 🔄
+        </button>
+        <span class="text-xs font-black text-emerald-800" id="applesLeftDisplay">Қалған алмалар: 0</span>
+      </div>
+    </div>
+
+    <!-- 3-РЕЖИМ: БЛИЦ ҚОСУ ЖӘНЕ АЗАЙТУ (QUIZ) -->
+    <div id="gameQuiz" class="game-view hidden w-full max-w-lg mx-auto bg-white rounded-3xl p-6 shadow-2xl border-4 border-sky-400">
+      <div class="flex justify-between items-center mb-3">
+        <span class="text-xs font-bold bg-sky-100 text-sky-800 px-3 py-1 rounded-full">Блиц Сұрақ</span>
+        <div class="flex items-center gap-1 text-sm font-black text-orange-600">
+          <span>🔥 Серия:</span>
+          <span id="quizStreak">0</span>
+        </div>
+      </div>
+
+      <!-- Сұрақ көрінісі -->
+      <div class="bg-gradient-to-r from-sky-400 to-indigo-500 rounded-3xl p-6 text-white text-center shadow-lg my-4 relative overflow-hidden">
+        <div class="text-xs uppercase tracking-widest text-sky-200 font-black mb-1">Сұрақты шеш:</div>
+        <div class="text-4xl sm:text-5xl font-black font-kid tracking-wider" id="quizQuestionText">
+          9 - 4 = ?
+        </div>
+        <!-- Көрнекі түсіндірме мини-блок -->
+        <div id="quizHintDots" class="mt-3 flex justify-center gap-1.5"></div>
+      </div>
+
+      <!-- Жауап нұсқалары -->
+      <div class="grid grid-cols-2 gap-3" id="quizOptionsGrid">
+        <!-- Түймелер код арқылы толтырылады -->
+      </div>
+
+      <!-- Түсініктеме / Мадақтау мәтіні -->
+      <div id="quizFeedback" class="h-8 mt-4 text-center font-black text-sm"></div>
+    </div>
+
+    <!-- 4-РЕЖИМ: ЖҰБЫН ТАП (MATCHING CARDS) -->
+    <div id="gameMatch" class="game-view hidden w-full max-w-xl mx-auto bg-white rounded-3xl p-5 shadow-2xl border-4 border-purple-400">
+      <div class="text-center mb-3">
+        <h2 class="text-2xl font-black text-purple-800 font-kid">🃏 Жұбын тап (9-дың құрамы)</h2>
+        <p class="text-xs text-purple-600 font-bold">Қосындысы 9 немесе бір-біріне тең жұптарды ашып тап!</p>
+      </div>
+
+      <!-- Карталар торы -->
+      <div class="grid grid-cols-4 gap-2.5 p-1" id="memoryCardsGrid">
+        <!-- 12-16 карточка салынады -->
+      </div>
+
+      <div class="mt-4 flex justify-between items-center px-2">
+        <span class="text-xs font-black text-purple-800" id="matchPairsFound">Табылған жұп: 0 / 6</span>
+        <button onclick="initMatchMode()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-xs font-black shadow-md transition active:scale-95">
+          Қайта бастау 🔄
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Хабарлама поп-ап көрінісі -->
+  <div id="toastMessage" class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 opacity-0 pointer-events-none -translate-y-4">
+    <div class="bg-amber-400 text-amber-950 font-black px-6 py-3 rounded-3xl shadow-2xl border-4 border-white flex items-center gap-2 text-base font-kid animate-pop">
+      <span id="toastIcon" class="text-2xl">🎉</span>
+      <span id="toastText">Керемет!</span>
+    </div>
+  </div>
+
+  <!-- Футер -->
+  <footer class="w-full text-center py-2 text-slate-500 text-xs font-bold">
+    Балаларға арналған 1-сынып математикасы • 9 санының құрамы, қосу және азайту
+  </footer>
+
+  <script>
+    // Дыбыстық жүйе (Web Audio API - ешқандай сыртқы файлсыз)
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    const soundToggleBtn = document.getElementById('soundToggleBtn');
+    soundToggleBtn.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      soundToggleBtn.textContent = soundEnabled ? '🔊' : '🔇';
+    });
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      initAudio();
+      const ctx = audioCtx;
+      const now = ctx.currentTime;
+
+      if (type === 'correct') {
+        // Дұрыс жауап: көңілді аккорд (Major chord chime)
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+          gain.gain.setValueAtTime(0, now + idx * 0.06);
+          gain.gain.linearRampToValueAtTime(0.2, now + idx * 0.06 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.35);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.06);
+          osc.stop(now + idx * 0.06 + 0.4);
+        });
+      } else if (type === 'wrong') {
+        // Қате: жұмсақ бұлтыңдаған төмен дыбыс
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(110, now + 0.25);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      } else if (type === 'tap') {
+        // Басу: кішкентай сыртыл (Click/Plop)
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } else if (type === 'win') {
+        // Толық жеңіс шаттығы
+        [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+          gain.gain.setValueAtTime(0.12, now + idx * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.5);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.1);
+          osc.stop(now + idx * 0.1 + 0.6);
+        });
+      }
+    }
+
+    const canvas = document.getElementById('confettiCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function triggerConfetti() {
+      const colors = ['#f59e0b', '#ef4444', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6'];
+      for (let i = 0; i < 60; i++) {
+        particles.push({
+          x: window.innerWidth / 2,
+          y: window.innerHeight / 2 - 50,
+          vx: (Math.random() - 0.5) * 14,
+          vy: (Math.random() - 0.7) * 16,
+          size: Math.random() * 8 + 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rotation: Math.random() * 360,
+          vRot: (Math.random() - 0.5) * 10,
+          life: 1,
+          decay: Math.random() * 0.015 + 0.015
+        });
+      }
+    }
+
+    function updateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.4; // gravity
+        p.rotation += p.vRot;
+        p.life -= p.decay;
+
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        ctx.restore();
+      }
+      requestAnimationFrame(updateParticles);
+    }
+    requestAnimationFrame(updateParticles);
+
+    let totalScore = 0;
+    const PRAISES = ['Жарайсың! 🌟', 'Өте керемет! 🎉', 'Тамаша! 👏', 'Дұрыс! 🚀', 'Бәрекелді! ✨'];
+    const ENCOURAGEMENTS = ['Тағы да байқап көр! 💪', 'Сәл ойланып көрші 😊', '9 шығуы керек еді! ✨'];
+
+    function addScore(points = 10) {
+      totalScore += points;
+      const display = document.getElementById('scoreDisplay');
+      display.textContent = totalScore;
+      display.classList.add('scale-125', 'text-emerald-600');
+      setTimeout(() => display.classList.remove('scale-125', 'text-emerald-600'), 300);
+    }
+
+    function showToast(message, isSuccess = true) {
+      const toast = document.getElementById('toastMessage');
+      const text = document.getElementById('toastText');
+      const icon = document.getElementById('toastIcon');
+
+      text.textContent = message;
+      icon.textContent = isSuccess ? '🌟' : '💡';
+      toast.children[0].className = isSuccess 
+        ? "bg-amber-400 text-amber-950 font-black px-6 py-3 rounded-3xl shadow-2xl border-4 border-white flex items-center gap-2 text-base font-kid animate-pop"
+        : "bg-rose-400 text-white font-black px-6 py-3 rounded-3xl shadow-2xl border-4 border-white flex items-center gap-2 text-base font-kid animate-pop";
+
+      toast.classList.remove('opacity-0', '-translate-y-4');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-4');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 1500);
+    }
+
+    // 10-frame visualizer (9 алмадан тұратын көрнекі сызба)
+    function renderVisualTenFrame(highlightCount = 0) {
+      const container = document.getElementById('visualTenFrame');
+      container.innerHTML = '';
+      for (let i = 1; i <= 9; i++) {
+        const dot = document.createElement('div');
+        const isHighlight = i <= highlightCount;
+        dot.className = `w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center text-[10px] font-black border transition-all ${
+          isHighlight ? 'bg-amber-400 border-amber-600 text-amber-950 scale-110 shadow-sm' : 'bg-sky-100 border-sky-300 text-sky-400'
+        }`;
+        dot.textContent = i;
+        container.appendChild(dot);
+      }
+    }
+    renderVisualTenFrame(9);
+
+    // Вкладкаларды ауыстыру логикасы
+    function switchTab(tabId) {
+      playSound('tap');
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        if (btn.dataset.tab === tabId) {
+          btn.className = "tab-btn active px-4 py-2 rounded-2xl font-black text-sm transition-all shadow-md bg-amber-500 text-white border-2 border-amber-600 scale-105";
+        } else {
+          btn.className = "tab-btn px-4 py-2 rounded-2xl font-black text-sm transition-all shadow-md bg-white text-slate-700 border-2 border-slate-200 hover:bg-amber-100";
+        }
+      });
+
+      document.querySelectorAll('.game-view').forEach(view => view.classList.add('hidden'));
+
+      if (tabId === 'house') {
+        document.getElementById('gameHouse').classList.remove('hidden');
+      } else if (tabId === 'apples') {
+        document.getElementById('gameApples').classList.remove('hidden');
+        initApplesMode();
+      } else if (tabId === 'quiz') {
+        document.getElementById('gameQuiz').classList.remove('hidden');
+        nextQuizQuestion();
+      } else if (tabId === 'match') {
+        document.getElementById('gameMatch').classList.remove('hidden');
+        initMatchMode();
+      }
+    }
+
+    let houseCurrentLevel = 0;
+    const houseLevels = [
+      [{ a: 1, b: 8, hide: 'b' }, { a: 2, b: 7, hide: 'a' }, { a: 3, b: 6, hide: 'b' }],
+      [{ a: 4, b: 5, hide: 'b' }, { a: 0, b: 9, hide: 'a' }, { a: 6, b: 3, hide: 'b' }],
+      [{ a: 7, b: 2, hide: 'b' }, { a: 8, b: 1, hide: 'a' }, { a: 5, b: 4, hide: 'b' }],
+      [{ a: 9, b: 0, hide: 'b' }, { a: 3, b: 6, hide: 'a' }, { a: 1, b: 8, hide: 'a' }],
+      [{ a: 2, b: 7, hide: 'b' }, { a: 4, b: 5, hide: 'a' }, { a: 8, b: 1, hide: 'b' }]
+    ];
+    let activeHouseRowIdx = null;
+
+    function initHouseMode() {
+      const container = document.getElementById('houseRowsContainer');
+      container.innerHTML = '';
+      const rows = houseLevels[houseCurrentLevel % houseLevels.length];
+      document.getElementById('houseProgress').textContent = `${(houseCurrentLevel % houseLevels.length) + 1} / ${houseLevels.length}`;
+
+      rows.forEach((row, idx) => {
+        const rowEl = document.createElement('div');
+        rowEl.className = "flex items-center justify-center gap-4 bg-white p-2.5 rounded-2xl border-2 border-amber-300 shadow-sm";
+        rowEl.id = `houseRow_${idx}`;
+
+        const leftVal = row.hide === 'a' ? '?' : row.a;
+        const rightVal = row.hide === 'b' ? '?' : row.b;
+
+        rowEl.innerHTML = `
+          <button onclick="selectHouseSlot(${idx}, 'a')" class="house-slot ${row.hide === 'a' ? 'border-dashed border-4 border-amber-500 bg-amber-50 animate-pulse text-amber-600' : 'bg-sky-100 text-sky-900 border-2 border-sky-300'} w-14 h-14 rounded-2xl text-2xl font-black flex items-center justify-center shadow-inner transition active:scale-95" id="slot_${idx}_a">
+            ${leftVal}
+          </button>
+          <div class="text-2xl font-black text-rose-500">+</div>
+          <button onclick="selectHouseSlot(${idx}, 'b')" class="house-slot ${row.hide === 'b' ? 'border-dashed border-4 border-amber-500 bg-amber-50 animate-pulse text-amber-600' : 'bg-sky-100 text-sky-900 border-2 border-sky-300'} w-14 h-14 rounded-2xl text-2xl font-black flex items-center justify-center shadow-inner transition active:scale-95" id="slot_${idx}_b">
+            ${rightVal}
+          </button>
+          <div class="text-2xl font-black text-amber-700">= 9</div>
+        `;
+        container.appendChild(rowEl);
+      });
+
+      // Бірінші шешілмеген бос ұяшықты автоматты таңдау
+      activeHouseRowIdx = 0;
+      updateKeypadHighlight();
+    }
+
+    function selectHouseSlot(rowIdx, slotSide) {
+      playSound('tap');
+      const rows = houseLevels[houseCurrentLevel % houseLevels.length];
+      if (rows[rowIdx].hide === slotSide && !rows[rowIdx].solved) {
+        activeHouseRowIdx = rowIdx;
+        updateKeypadHighlight();
+      }
+    }
+
+    function updateKeypadHighlight() {
+      // Көрнекі үйшік қатарын ерекшелеу
+      const rows = houseLevels[houseCurrentLevel % houseLevels.length];
+      rows.forEach((_, idx) => {
+        const el = document.getElementById(`houseRow_${idx}`);
+        if (el) {
+          if (idx === activeHouseRowIdx) {
+            el.classList.add('ring-4', 'ring-amber-400');
+          } else {
+            el.classList.remove('ring-4', 'ring-amber-400');
+          }
+        }
+      });
+    }
+
+    function handleHouseDigitInput(digit) {
+      if (activeHouseRowIdx === null) return;
+      const rows = houseLevels[houseCurrentLevel % houseLevels.length];
+      const row = rows[activeHouseRowIdx];
+      const needed = row.hide === 'a' ? row.a : row.b;
+
+      if (digit === needed) {
+        // Дұрыс тапты!
+        playSound('correct');
+        row.solved = true;
+        const slotEl = document.getElementById(`slot_${activeHouseRowIdx}_${row.hide}`);
+        slotEl.textContent = digit;
+        slotEl.className = "w-14 h-14 rounded-2xl text-2xl font-black flex items-center justify-center bg-emerald-100 text-emerald-800 border-2 border-emerald-400 shadow animate-pop";
+
+        addScore(10);
+        showToast(PRAISES[Math.floor(Math.random() * PRAISES.length)], true);
+
+        // Келесі бос қатарды іздеу
+        const nextUnsolved = rows.findIndex((r, idx) => !r.solved && idx > activeHouseRowIdx);
+        const anyUnsolved = rows.findIndex(r => !r.solved);
+
+        if (nextUnsolved !== -1) {
+          activeHouseRowIdx = nextUnsolved;
+          updateKeypadHighlight();
+        } else if (anyUnsolved !== -1) {
+          activeHouseRowIdx = anyUnsolved;
+          updateKeypadHighlight();
+        } else {
+          // Барлық қабат толық шешілді!
+          playSound('win');
+          triggerConfetti();
+          showToast('Үйшік толық толтырылды! 🎉', true);
+          activeHouseRowIdx = null;
+          setTimeout(() => {
+            houseCurrentLevel++;
+            initHouseMode();
+          }, 1400);
+        }
+      } else {
+        // Қате
+        playSound('wrong');
+        showToast(ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)], false);
+      }
+    }
+
+    // Үйшікке арналған пернетақта
+    const houseKeypad = document.getElementById('houseKeypad');
+    for (let d = 0; d <= 9; d++) {
+      const btn = document.createElement('button');
+      btn.className = "w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-amber-400 hover:bg-amber-500 text-amber-950 font-black text-xl shadow-md border-2 border-amber-500 transition active:scale-90 font-kid";
+      btn.textContent = d;
+      btn.onclick = () => handleHouseDigitInput(d);
+      houseKeypad.appendChild(btn);
+    }
+
+    let applesData = [];
+    let selectedApples = [];
+
+    function initApplesMode() {
+      const pairs = [
+        [1, 8], [2, 7], [3, 6], [4, 5], [0, 9], [5, 4]
+      ];
+      // 6 жұп алма (барлығы 12 алма)
+      let list = [];
+      pairs.forEach((p, idx) => {
+        list.push({ id: idx * 2, val: p[0], matched: false });
+        list.push({ id: idx * 2 + 1, val: p[1], matched: false });
+      });
+      // Араластыру (Shuffle)
+      applesData = list.sort(() => Math.random() - 0.5);
+      selectedApples = [];
+      renderApplesGrid();
+      updateApplesStatus();
+    }
+
+    function renderApplesGrid() {
+      const grid = document.getElementById('applesGrid');
+      grid.innerHTML = '';
+      applesData.forEach(item => {
+        if (item.matched) {
+          const emptySlot = document.createElement('div');
+          emptySlot.className = "h-20 rounded-2xl bg-emerald-50/50 border-2 border-dashed border-emerald-200 flex items-center justify-center text-emerald-300 text-xl";
+          emptySlot.textContent = "✓";
+          grid.appendChild(emptySlot);
+          return;
+        }
+
+        const isSelected = selectedApples.some(a => a.id === item.id);
+        const appleBtn = document.createElement('button');
+        appleBtn.className = `h-20 rounded-2xl flex flex-col items-center justify-center font-kid transition-all shadow-md active:scale-95 border-4 ${
+          isSelected 
+            ? 'bg-rose-500 text-white border-yellow-300 scale-105 shadow-xl ring-4 ring-yellow-400'
+            : 'bg-rose-100 hover:bg-rose-200 text-rose-800 border-rose-300'
+        }`;
+        appleBtn.innerHTML = `
+          <span class="text-2xl">🍎</span>
+          <span class="text-2xl font-black leading-none">${item.val}</span>
+        `;
+        appleBtn.onclick = () => handleAppleClick(item);
+        grid.appendChild(appleBtn);
+      });
+    }
+
+    function handleAppleClick(item) {
+      playSound('tap');
+      // Егер қайта басылса - алып тастау
+      if (selectedApples.some(a => a.id === item.id)) {
+        selectedApples = selectedApples.filter(a => a.id !== item.id);
+        renderApplesGrid();
+        updateApplesStatus();
+        return;
+      }
+
+      if (selectedApples.length < 2) {
+        selectedApples.push(item);
+        renderApplesGrid();
+        updateApplesStatus();
+
+        if (selectedApples.length === 2) {
+          const sum = selectedApples[0].val + selectedApples[1].val;
+          if (sum === 9) {
+            // Дұрыс жұп!
+            playSound('correct');
+            showToast(`${selectedApples[0].val} + ${selectedApples[1].val} = 9! Керемет! 🍎`, true);
+            addScore(15);
+            selectedApples.forEach(a => {
+              const obj = applesData.find(x => x.id === a.id);
+              if (obj) obj.matched = true;
+            });
+            selectedApples = [];
+            setTimeout(() => {
+              renderApplesGrid();
+              updateApplesStatus();
+              checkApplesWin();
+            }, 500);
+          } else {
+            // Қате қосынды
+            playSound('wrong');
+            showToast(`${selectedApples[0].val} + ${selectedApples[1].val} = ${sum} (9 емес!)`, false);
+            setTimeout(() => {
+              selectedApples = [];
+              renderApplesGrid();
+              updateApplesStatus();
+            }, 800);
+          }
+        }
+      }
+    }
+
+    function updateApplesStatus() {
+      const display = document.getElementById('appleSelectionDisplay');
+      const hint = document.getElementById('appleStatusHint');
+      const leftCount = applesData.filter(a => !a.matched).length;
+      document.getElementById('applesLeftDisplay').textContent = `Қалған алмалар: ${leftCount}`;
+
+      if (selectedApples.length === 0) {
+        display.textContent = '? + ?';
+        hint.textContent = '2 алма таңда';
+        hint.className = "text-xs font-black px-2 py-1 rounded-xl bg-amber-200 text-amber-900";
+      } else if (selectedApples.length === 1) {
+        display.textContent = `${selectedApples[0].val} + ?`;
+        hint.textContent = 'Екіншісін қос!';
+        hint.className = "text-xs font-black px-2 py-1 rounded-xl bg-sky-200 text-sky-900";
+      } else {
+        const sum = selectedApples[0].val + selectedApples[1].val;
+        display.textContent = `${selectedApples[0].val} + ${selectedApples[1].val} = ${sum}`;
+      }
+    }
+
+    function checkApplesWin() {
+      const remaining = applesData.filter(a => !a.matched).length;
+      if (remaining === 0) {
+        playSound('win');
+        triggerConfetti();
+        showToast('Барлық 9-дық алмалар жиналды! 🏆', true);
+        setTimeout(initApplesMode, 2200);
+      }
+    }
+
+    let quizStreak = 0;
+    let currentQuiz = {};
+
+    function generateQuizQuestion() {
+      // 9 көлеміндегі қосу мен азайту амалдары
+      const types = ['add', 'sub', 'missing_add', 'missing_sub'];
+      const chosenType = types[Math.floor(Math.random() * types.length)];
+      let question = '';
+      let answer = 0;
+      let dotsCount = 9;
+
+      if (chosenType === 'add') {
+        const a = Math.floor(Math.random() * 10); // 0..9
+        const b = 9 - a;
+        question = `${a} + ${b} = ?`;
+        answer = 9;
+      } else if (chosenType === 'sub') {
+        const b = Math.floor(Math.random() * 10); // 0..9
+        const result = 9 - b;
+        question = `9 - ${b} = ?`;
+        answer = result;
+      } else if (chosenType === 'missing_add') {
+        const a = Math.floor(Math.random() * 9) + 1; // 1..9
+        const b = 9 - a;
+        question = `${a} + ? = 9`;
+        answer = b;
+      } else {
+        // missing_sub: 9 - ? = X
+        const b = Math.floor(Math.random() * 9);
+        const result = 9 - b;
+        question = `9 - ? = ${result}`;
+        answer = b;
+      }
+
+      // Жауап нұсқалары (1 дұрыс + 3 бұрыс)
+      const options = new Set([answer]);
+      while (options.size < 4) {
+        let fake = Math.floor(Math.random() * 10);
+        if (fake !== answer) options.add(fake);
+      }
+
+      return {
+        question,
+        answer,
+        options: Array.from(options).sort(() => Math.random() - 0.5)
+      };
+    }
+
+    function nextQuizQuestion() {
+      currentQuiz = generateQuizQuestion();
+      document.getElementById('quizQuestionText').textContent = currentQuiz.question;
+      document.getElementById('quizFeedback').textContent = '';
+
+      // Көрнекі нүктелермен санауға көмектесу (9 дана дөңгелек)
+      const hintDots = document.getElementById('quizHintDots');
+      hintDots.innerHTML = '';
+      for (let i = 0; i < 9; i++) {
+        const dot = document.createElement('div');
+        dot.className = "w-3 h-3 rounded-full bg-white/40";
+        hintDots.appendChild(dot);
+      }
+
+      const optionsGrid = document.getElementById('quizOptionsGrid');
+      optionsGrid.innerHTML = '';
+
+      currentQuiz.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = "py-4 bg-sky-50 hover:bg-sky-100 text-sky-950 font-kid font-black text-2xl rounded-2xl border-2 border-sky-200 shadow transition active:scale-95";
+        btn.textContent = opt;
+        btn.onclick = () => handleQuizAnswer(opt, btn);
+        optionsGrid.appendChild(btn);
+      });
+    }
+
+    function handleQuizAnswer(selected, buttonEl) {
+      playSound('tap');
+      const fb = document.getElementById('quizFeedback');
+
+      if (selected === currentQuiz.answer) {
+        // Дұрыс
+        playSound('correct');
+        quizStreak++;
+        document.getElementById('quizStreak').textContent = quizStreak;
+        addScore(10 + Math.min(quizStreak * 2, 20));
+        buttonEl.className = "py-4 bg-emerald-500 text-white font-kid font-black text-2xl rounded-2xl border-2 border-emerald-600 shadow animate-pop";
+        fb.textContent = PRAISES[Math.floor(Math.random() * PRAISES.length)];
+        fb.className = "h-8 mt-4 text-center font-black text-emerald-600 animate-pop";
+
+        if (quizStreak % 5 === 0) {
+          triggerConfetti();
+          playSound('win');
+        }
+
+        setTimeout(nextQuizQuestion, 900);
+      } else {
+        // Қате
+        playSound('wrong');
+        quizStreak = 0;
+        document.getElementById('quizStreak').textContent = 0;
+        buttonEl.className = "py-4 bg-rose-400 text-white font-kid font-black text-2xl rounded-2xl border-2 border-rose-500 shadow shake";
+        fb.textContent = `Дұрыс жауабы: ${currentQuiz.answer}`;
+        fb.className = "h-8 mt-4 text-center font-black text-rose-600";
+        setTimeout(nextQuizQuestion, 1400);
+      }
+    }
+
+    let matchDeck = [];
+    let flippedCards = [];
+    let matchPairsFoundCount = 0;
+    const TOTAL_MATCH_PAIRS = 6;
+
+    function initMatchMode() {
+      // 9 санына қатысты 6 жұп
+      const rawPairs = [
+        { id: 1, frontA: '4 + 5', frontB: '9' },
+        { id: 2, frontA: '9 - 3', frontB: '6' },
+        { id: 3, frontA: '9 - 2', frontB: '7' },
+        { id: 4, frontA: '1 + 8', frontB: '9' },
+        { id: 5, frontA: '9 - 5', frontB: '4' },
+        { id: 6, frontA: '3 + 6', frontB: '9' }
+      ];
+
+      matchDeck = [];
+      rawPairs.forEach(p => {
+        matchDeck.push({ pairId: p.id, label: p.frontA, isSolved: false });
+        matchDeck.push({ pairId: p.id, label: p.frontB, isSolved: false });
+      });
+
+      // Араластыру
+      matchDeck.sort(() => Math.random() - 0.5);
+      flippedCards = [];
+      matchPairsFoundCount = 0;
+      document.getElementById('matchPairsFound').textContent = `Табылған жұп: 0 / ${TOTAL_MATCH_PAIRS}`;
+
+      renderMatchGrid();
+    }
+
+    function renderMatchGrid() {
+      const grid = document.getElementById('memoryCardsGrid');
+      grid.innerHTML = '';
+
+      matchDeck.forEach((card, index) => {
+        const cardContainer = document.createElement('div');
+        cardContainer.className = "h-20 sm:h-24 card-flip cursor-pointer";
+
+        const inner = document.createElement('div');
+        inner.className = `w-full h-full card-inner relative rounded-2xl ${card.isSolved || flippedCards.includes(index) ? 'flipped' : ''}`;
+
+        // Алдыңғы беті (Жабық тұрғанда)
+        const front = document.createElement('div');
+        front.className = "card-front absolute inset-0 bg-purple-500 hover:bg-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-md border-2 border-purple-400";
+        front.innerHTML = "❓";
+
+        // Артқы беті (Ашылғанда)
+        const back = document.createElement('div');
+        back.className = `card-back absolute inset-0 rounded-2xl flex items-center justify-center font-kid font-black text-base sm:text-lg shadow-md border-2 ${
+          card.isSolved 
+            ? 'bg-emerald-100 text-emerald-800 border-emerald-400' 
+            : 'bg-white text-purple-900 border-purple-300'
+        }`;
+        back.textContent = card.label;
+
+        inner.appendChild(front);
+        inner.appendChild(back);
+        cardContainer.appendChild(inner);
+
+        cardContainer.onclick = () => handleCardClick(index);
+        grid.appendChild(cardContainer);
+      });
+    }
+
+    function handleCardClick(index) {
+      if (flippedCards.length >= 2) return;
+      if (flippedCards.includes(index)) return;
+      if (matchDeck[index].isSolved) return;
+
+      playSound('tap');
+      flippedCards.push(index);
+      renderMatchGrid();
+
+      if (flippedCards.length === 2) {
+        const [idx1, idx2] = flippedCards;
+        const card1 = matchDeck[idx1];
+        const card2 = matchDeck[idx2];
+
+        if (card1.pairId === card2.pairId) {
+          // Жұбы табылды!
+          playSound('correct');
+          card1.isSolved = true;
+          card2.isSolved = true;
+          matchPairsFoundCount++;
+          addScore(20);
+          showToast('Жұп табылды! 👏', true);
+          document.getElementById('matchPairsFound').textContent = `Табылған жұп: ${matchPairsFoundCount} / ${TOTAL_MATCH_PAIRS}`;
+          flippedCards = [];
+
+          setTimeout(() => {
+            renderMatchGrid();
+            if (matchPairsFoundCount === TOTAL_MATCH_PAIRS) {
+              playSound('win');
+              triggerConfetti();
+              showToast('Барлық жұптарды таптың! Керемет! 🏆', true);
+            }
+          }, 400);
+        } else {
+          // Жұп емес
+          playSound('wrong');
+          setTimeout(() => {
+            flippedCards = [];
+            renderMatchGrid();
+          }, 900);
+        }
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initHouseMode();
+    });
+  </script>
+</body>
+</html>
